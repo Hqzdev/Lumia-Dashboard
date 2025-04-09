@@ -1,81 +1,267 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { LineChart, BarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface AIDetailedViewProps {
   metricId: string
 }
 
+interface LogEntry {
+  timestamp: string
+  event: string
+  value: string
+  type: "info" | "warning" | "error" | "success"
+}
+
+const sampleLogs: Record<string, LogEntry[]> = {
+  latency: [
+    { timestamp: "2024-03-10 15:42:23", event: "Response time spike detected", value: "156ms", type: "warning" },
+    { timestamp: "2024-03-10 15:30:12", event: "System optimization completed", value: "42ms", type: "success" },
+    { timestamp: "2024-03-10 15:15:45", event: "Load balancer adjusted", value: "38ms", type: "info" },
+    { timestamp: "2024-03-10 14:55:30", event: "High traffic period", value: "78ms", type: "info" },
+    { timestamp: "2024-03-10 14:30:00", event: "Performance check", value: "45ms", type: "info" },
+  ],
+  throughput: [
+    { timestamp: "2024-03-10 15:45:00", event: "New throughput record", value: "1,240 req/s", type: "success" },
+    { timestamp: "2024-03-10 15:30:00", event: "Traffic surge handled", value: "1,150 req/s", type: "info" },
+    { timestamp: "2024-03-10 15:15:00", event: "Auto-scaling triggered", value: "980 req/s", type: "warning" },
+    { timestamp: "2024-03-10 15:00:00", event: "Normal operation", value: "850 req/s", type: "info" },
+  ],
+  accuracy: [
+    { timestamp: "2024-03-10 15:40:00", event: "Model accuracy improved", value: "98.3%", type: "success" },
+    { timestamp: "2024-03-10 15:25:00", event: "Training iteration completed", value: "97.8%", type: "info" },
+    { timestamp: "2024-03-10 15:10:00", event: "Data validation check", value: "97.5%", type: "info" },
+    { timestamp: "2024-03-10 14:55:00", event: "Accuracy dip detected", value: "97.1%", type: "warning" },
+  ],
+  resources: [
+    { timestamp: "2024-03-10 15:44:00", event: "Memory usage optimized", value: "76%", type: "success" },
+    { timestamp: "2024-03-10 15:30:00", event: "CPU spike detected", value: "92%", type: "warning" },
+    { timestamp: "2024-03-10 15:15:00", event: "Resource allocation adjusted", value: "82%", type: "info" },
+    { timestamp: "2024-03-10 15:00:00", event: "System health check", value: "78%", type: "info" },
+  ],
+  availability: [
+    { timestamp: "2024-03-10 15:45:00", event: "System fully operational", value: "99.99%", type: "success" },
+    { timestamp: "2024-03-10 15:30:00", event: "Maintenance completed", value: "99.95%", type: "info" },
+    { timestamp: "2024-03-10 15:15:00", event: "Scheduled maintenance", value: "99.90%", type: "warning" },
+    { timestamp: "2024-03-10 15:00:00", event: "Health check passed", value: "99.99%", type: "info" },
+  ],
+}
+
+const performanceData = [
+  { name: '00:00', value: 42 },
+  { name: '04:00', value: 38 },
+  { name: '08:00', value: 45 },
+  { name: '12:00', value: 78 },
+  { name: '16:00', value: 56 },
+  { name: '20:00', value: 42 },
+  { name: '24:00', value: 39 },
+]
+
+const detailedMetrics = {
+  latency: {
+    current: { value: "42ms", change: "-8%" },
+    peak: { value: "156ms", time: "15:42" },
+    average: { value: "48ms", period: "24h" },
+    minimum: { value: "22ms", time: "03:15" }
+  },
+  throughput: {
+    current: { value: "1,240 req/s", change: "+12%" },
+    peak: { value: "2,150 req/s", time: "14:30" },
+    average: { value: "950 req/s", period: "24h" },
+    minimum: { value: "420 req/s", time: "02:00" }
+  },
+  accuracy: {
+    current: { value: "98.3%", change: "+0.5%" },
+    peak: { value: "99.1%", time: "16:45" },
+    average: { value: "97.8%", period: "24h" },
+    minimum: { value: "96.5%", time: "08:20" }
+  },
+  resources: {
+    current: { value: "76%", change: "+4%" },
+    peak: { value: "92%", time: "15:30" },
+    average: { value: "68%", period: "24h" },
+    minimum: { value: "45%", time: "01:00" }
+  },
+  availability: {
+    current: { value: "99.99%", change: "0%" },
+    peak: { value: "100%", time: "12:00" },
+    average: { value: "99.95%", period: "24h" },
+    minimum: { value: "99.90%", time: "09:15" }
+  }
+}
+
 export function AIDetailedView({ metricId }: AIDetailedViewProps) {
+  const logs = sampleLogs[metricId] || []
+  const metrics = detailedMetrics[metricId as keyof typeof detailedMetrics] || {}
+
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-2 bg-blue-50 rounded-xl overflow-hidden">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            History
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Detailed Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                  {getDetailedChartPlaceholder(metricId)}
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="details">Details</TabsTrigger>
+        <TabsTrigger value="history">History</TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview">
+        <Card>
+          <CardContent className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Statistics</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium">Average</div>
+                    <div className="text-2xl font-bold">{metrics.average?.value || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Current</div>
+                    <div className="text-2xl font-bold">{metrics.current?.value || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Peak</div>
+                    <div className="text-2xl font-bold">{metrics.peak?.value || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Minimum</div>
+                    <div className="text-2xl font-bold">{metrics.minimum?.value || "N/A"}</div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  {getMetricStatistics(metricId).map((stat, index) => (
-                    <div key={index} className="flex flex-col">
-                      <dt className="text-muted-foreground">{stat.name}</dt>
-                      <dd className="font-medium">{stat.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </CardContent>
-            </Card>
-          </div>
-          <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Performance</div>
+                <div className="h-[120px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="details">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Metrics</CardTitle>
+              <CardDescription>Comprehensive analysis of performance indicators</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Current Status</h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Value</span>
+                    <span className="text-sm font-medium">{metrics.current?.value}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Change</span>
+                    <span className={`text-sm font-medium ${
+                      metrics.current?.change?.startsWith('+') ? 'text-green-600' : 
+                      metrics.current?.change?.startsWith('-') ? 'text-red-600' : 
+                      'text-blue-600'
+                    }`}>{metrics.current?.change}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Peak Performance</h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Value</span>
+                    <span className="text-sm font-medium">{metrics.peak?.value}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Time</span>
+                    <span className="text-sm font-medium">{metrics.peak?.time}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
             <CardHeader>
               <CardTitle>Performance Analysis</CardTitle>
-              <CardDescription>Detailed analysis of {getMetricName(metricId)} performance over time.</CardDescription>
+              <CardDescription>24-hour performance breakdown</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                {getMetricName(metricId)} Performance Analysis Chart
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#2563eb" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="history">
-          <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
+        </div>
+      </TabsContent>
+      <TabsContent value="history">
+        <div className="space-y-4">
+          <Card>
             <CardHeader>
-              <CardTitle>Historical Data</CardTitle>
-              <CardDescription>View historical data for {getMetricName(metricId)}.</CardDescription>
+              <CardTitle>Historical Trend</CardTitle>
+              <CardDescription>Performance trend over the last 24 hours</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="h-[400px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                  Historical {getMetricName(metricId)} Data Chart
-                </div>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Logs</CardTitle>
+              <CardDescription>Recent system events and updates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-4">
+                  {logs.map((log, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white border-2 border-gray-100 hover:border-blue-100 transition-all"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-2 h-2 rounded-full ${
+                          log.type === 'success' ? 'bg-green-500' :
+                          log.type === 'warning' ? 'bg-yellow-500' :
+                          log.type === 'error' ? 'bg-red-500' :
+                          'bg-blue-500'
+                        }`} />
+                        <div>
+                          <div className="text-sm font-medium">{log.event}</div>
+                          <div className="text-xs text-muted-foreground">{log.timestamp}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">{log.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+    </Tabs>
   )
 }
 

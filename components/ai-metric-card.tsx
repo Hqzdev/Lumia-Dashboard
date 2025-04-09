@@ -21,6 +21,7 @@ interface MetricProps {
   description: string
   value: string
   change: string
+  historical: string
   icon: LucideIcon
   color: string
 }
@@ -62,6 +63,16 @@ export function AIMetricCard({ metric }: AIMetricCardProps) {
             {isNeutralChange && <span className="text-muted-foreground">{metric.change}</span>}
             <span className="ml-1 text-muted-foreground">{metric.description}</span>
           </CardDescription>
+          <div className="mt-2 flex items-center text-xs text-muted-foreground">
+            {metric.historical.startsWith("↑") ? (
+              <ArrowUp className="mr-1 h-3 w-3 text-green-500" />
+            ) : metric.historical.startsWith("↓") ? (
+              <ArrowDown className="mr-1 h-3 w-3 text-red-500" />
+            ) : null}
+            <span className={metric.historical.startsWith("↑") ? "text-green-500" : metric.historical.startsWith("↓") ? "text-red-500" : "text-muted-foreground"}>
+              {metric.historical}
+            </span>
+          </div>
           <div className="mt-3 h-[60px] w-full">
             <MetricGraph metricId={metric.id} />
           </div>

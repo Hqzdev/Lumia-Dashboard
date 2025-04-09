@@ -61,6 +61,7 @@ export default function Dashboard() {
       description: "Average response time",
       value: "42ms",
       change: "-8%",
+      historical: "↓ 12% from last month",
       icon: Clock,
       color: "text-blue-500",
     },
@@ -70,6 +71,7 @@ export default function Dashboard() {
       description: "Requests per second",
       value: "1,240",
       change: "+12%",
+      historical: "↑ 8% from last month",
       icon: Activity,
       color: "text-blue-600",
     },
@@ -79,6 +81,7 @@ export default function Dashboard() {
       description: "Model precision",
       value: "98.3%",
       change: "+0.5%",
+      historical: "↑ 1.2% from last month",
       icon: Brain,
       color: "text-blue-700",
     },
@@ -88,6 +91,7 @@ export default function Dashboard() {
       description: "CPU & Memory usage",
       value: "76%",
       change: "+4%",
+      historical: "↑ 2% from last month",
       icon: Cpu,
       color: "text-blue-800",
     },
@@ -97,6 +101,7 @@ export default function Dashboard() {
       description: "System uptime",
       value: "99.99%",
       change: "0%",
+      historical: "↑ 0.01% from last month",
       icon: Server,
       color: "text-blue-900",
     },
@@ -120,23 +125,16 @@ export default function Dashboard() {
       <style jsx global>
         {animations}
       </style>
-      <div className="flex min-h-screen flex-col bg-white/80 backdrop-blur-sm">
+      <div className="flex min-h-screen flex-col bg-white/80 backdrop-blur-sm items-center">
         <AnimatedGradient />
         <FloatingElements />
-        <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-md">
+        <header className="sticky top-0 z-10 rounded-2xl  w-[300px]">
           <div className="container flex h-16 items-center justify-between py-4">
             <div className="flex items-center gap-2">
-              <Database className="h-6 w-6 text-blue-600" />
-              <h1 className="text-xl font-bold">AI Metrics Dashboard</h1>
+              <Database className="h-6 w-6 text-blue-600 ml-5" />
+              <h1 className="text-xl font-bold ml-5 "><span className="bg-gradient-to-r from-blue-500 to-blue-800 text-transparent bg-clip-text">Lumia AI</span> Dashboard</h1>
             </div>
-            <nav className="flex items-center gap-4">
-              <Link href="#" className="text-sm font-medium">
-                Overview
-              </Link>
-              <Link href="#" className="text-sm font-medium text-muted-foreground">
-                Models
-              </Link>
-            </nav>
+           
           </div>
         </header>
         <main className="flex-1">
@@ -149,12 +147,6 @@ export default function Dashboard() {
                     className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                   >
                     Overview
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="analytics"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                  >
-                    Analytics
                   </TabsTrigger>
                   <TabsTrigger
                     value="models"
@@ -219,8 +211,47 @@ export default function Dashboard() {
                       <Maximize2 className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                      <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                        Combined Performance Graph
+                      <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex flex-col items-center justify-center p-4">
+                        <div className="w-full space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">Overall Performance</span>
+                              <span className="text-sm font-medium text-blue-600">94.2%</span>
+                            </div>
+                            <div className="h-2 w-full bg-blue-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-600 w-[94%]" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Latency</span>
+                                <span className="text-xs text-blue-600">42ms</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[85%]" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Accuracy</span>
+                                <span className="text-xs text-blue-600">98.3%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[98%]" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Throughput</span>
+                                <span className="text-xs text-blue-600">1.2k/s</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[92%]" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -230,48 +261,60 @@ export default function Dashboard() {
                       <Maximize2 className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                      <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                        System Health Metrics
+                      <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex flex-col items-center justify-center p-4">
+                        <div className="w-full space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-muted-foreground">System Status</span>
+                              <span className="text-sm font-medium text-green-600">Healthy</span>
+                            </div>
+                            <div className="h-2 w-full bg-green-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-green-600 w-[96%]" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">CPU Usage</span>
+                                <span className="text-xs text-blue-600">76%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[76%]" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Memory</span>
+                                <span className="text-xs text-blue-600">82%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[82%]" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Network</span>
+                                <span className="text-xs text-blue-600">120MB/s</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[65%]" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Storage</span>
+                                <span className="text-xs text-blue-600">42%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 w-[42%]" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
-              </TabsContent>
-              <TabsContent value="analytics" className="space-y-4">
-                <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle>Analytics</CardTitle>
-                    <CardDescription>Detailed analytics for your AI models and systems.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div
-                        className="h-[300px] w-full bg-blue-50/50 rounded-2xl flex items-center justify-center text-blue-600 animate-fade-in"
-                        style={{ animationDelay: "100ms" }}
-                      >
-                        Performance Trends
-                      </div>
-                      <div
-                        className="h-[300px] w-full bg-blue-50/50 rounded-2xl flex items-center justify-center text-blue-600 animate-fade-in"
-                        style={{ animationDelay: "200ms" }}
-                      >
-                        Usage Patterns
-                      </div>
-                      <div
-                        className="h-[300px] w-full bg-blue-50/50 rounded-2xl flex items-center justify-center text-blue-600 animate-fade-in"
-                        style={{ animationDelay: "300ms" }}
-                      >
-                        Error Analysis
-                      </div>
-                      <div
-                        className="h-[300px] w-full bg-blue-50/50 rounded-2xl flex items-center justify-center text-blue-600 animate-fade-in"
-                        style={{ animationDelay: "400ms" }}
-                      >
-                        Resource Allocation
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </TabsContent>
               <TabsContent value="models" className="space-y-4">
                 <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
@@ -281,7 +324,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {["GPT-4", "BERT", "ResNet", "DALL-E", "Stable Diffusion"].map((model, index) => (
+                      {["Lumia V2", "Lumia V1 Max", "Lumia V2 Pro"].map((model, index) => (
                         <Card
                           key={model}
                           className="bg-white/80 border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md hover:border-blue-200 animate-slide-in"
