@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { Activity, Brain, Clock, Cpu, Database, Maximize2, RefreshCw, Server } from "lucide-react"
+import { useState, useCallback, useEffect } from "react"
+import { Activity, Brain, Clock, Cpu, Database, Maximize2, RefreshCw, Server, GitBranch, GitCommit } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -50,9 +50,18 @@ const animations = `
   }
 `
 
+interface DeploymentData {
+  id: string
+  status: string
+  environment: string
+  created_at: string
+  description: string
+}
+
 export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [deployments, setDeployments] = useState<DeploymentData[]>([])
 
   const metrics = [
     {
@@ -118,6 +127,37 @@ export default function Dashboard() {
         description: "All metrics have been updated with the latest data.",
       })
     }, 1500)
+  }, [])
+
+  const fetchDeployments = async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/Hqzdev/LumiaAI/deployments', {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GITHUB_TOKEN}`,
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      setDeployments(data.slice(0, 5)) // Get latest 5 deployments
+    } catch (error) {
+      console.error('Error fetching deployments:', error)
+      toast({
+        title: "Error fetching deployments",
+        description: "Could not load deployment data. Please try again later.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  useEffect(() => {
+    fetchDeployments()
+    // Set up polling every 5 minutes
+    const interval = setInterval(fetchDeployments, 5 * 60 * 1000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -311,6 +351,75 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Logs</CardTitle>
+                      <Maximize2 className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
+                        View recent system logs and events.
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Firewall</CardTitle>
+                      <Maximize2 className="h-4 w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
+                        Monitor and manage firewall settings.
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Deployments</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="h-4 w-4 text-blue-500" />
+                        <Maximize2 className="h-4 w-4 text-blue-500" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {deployments.length > 0 ? (
+                          deployments.map((deployment) => (
+                            <div
+                              key={deployment.id}
+                              className="flex items-center justify-between p-2 rounded-lg bg-blue-50/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <GitCommit className="h-4 w-4 text-blue-500" />
+                                <div>
+                                  <div className="text-sm font-medium">{deployment.environment}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(deployment.created_at).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  deployment.status === 'success' ? 'bg-green-100 text-green-700' :
+                                  deployment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                  deployment.status === 'failure' ? 'bg-red-100 text-red-700' :
+                                  'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {deployment.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
+                            Loading deployment data...
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
