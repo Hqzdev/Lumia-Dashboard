@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Activity, Brain, Clock, Cpu, Database, Maximize2, RefreshCw, Server, GitBranch, GitCommit } from "lucide-react"
+import { Activity, Brain, Clock, Cpu, Database, Maximize2, RefreshCw, Server, GitBranch, GitCommit, Shield } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -58,10 +58,46 @@ interface DeploymentData {
   description: string
 }
 
+interface FirewallData {
+  allTraffic: number;
+  allowed: number;
+  denied: number;
+  challenged: number;
+  logged: number;
+  rateLimited: number;
+}
+
 export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [deployments, setDeployments] = useState<DeploymentData[]>([])
+  const [firewallData, setFirewallData] = useState<FirewallData>({
+    allTraffic: 117,
+    allowed: 104,
+    denied: 0,
+    challenged: 13,
+    logged: 0,
+    rateLimited: 0
+  })
+  const [projectStatus, setProjectStatus] = useState({
+    deployment: { 
+      status: 'ready', 
+      environment: 'production',
+      creator: 'hqzdev',
+      createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      url: 'https://vercel.com/ha1zyys-projects/lumia-ai/deployments'
+    },
+    buildTime: '0s',
+    framework: 'Next.js',
+    domain: { status: 'active' },
+    ssl: { valid: true }
+  })
+  const [logs, setLogs] = useState<Array<{
+    id: string;
+    timestamp: string;
+    message: string;
+    type: 'info' | 'error' | 'warning';
+  }>>([])
 
   const metrics = [
     {
@@ -116,19 +152,6 @@ export default function Dashboard() {
     },
   ]
 
-  const handleRefresh = useCallback(() => {
-    setIsRefreshing(true)
-
-    // Simulate a refresh with a timeout
-    setTimeout(() => {
-      setIsRefreshing(false)
-      toast({
-        title: "Dashboard refreshed",
-        description: "All metrics have been updated with the latest data.",
-      })
-    }, 1500)
-  }, [])
-
   const fetchDeployments = async () => {
     try {
       const response = await fetch('https://api.github.com/repos/Hqzdev/LumiaAI/deployments', {
@@ -143,6 +166,7 @@ export default function Dashboard() {
       }
       const data = await response.json()
       setDeployments(data.slice(0, 5)) // Get latest 5 deployments
+      return Promise.resolve()
     } catch (error) {
       console.error('Error fetching deployments:', error)
       toast({
@@ -150,15 +174,147 @@ export default function Dashboard() {
         description: "Could not load deployment data. Please try again later.",
         variant: "destructive"
       })
+      return Promise.reject(error)
     }
   }
 
+  const fetchFirewallData = async () => {
+    try {
+      const response = await fetch('https://api.vercel.com/v1/firewall/stats', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_VERCEL_TOKEN}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setFirewallData({
+        allTraffic: data.allTraffic || 0,
+        allowed: data.allowed || 0,
+        denied: data.denied || 0,
+        challenged: data.challenged || 0,
+        logged: data.logged || 0,
+        rateLimited: data.rateLimited || 0
+      });
+      return Promise.resolve()
+    } catch (error) {
+      console.error('Error fetching firewall data:', error);
+      return Promise.reject(error)
+    }
+  };
+
+  const fetchProjectStatus = async () => {
+    try {
+      const response = await fetch('https://api.vercel.com/v6/deployments', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_VERCEL_TOKEN}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      const latestDeployment = data.deployments[0];
+      
+      setProjectStatus(prev => ({
+        ...prev,
+        deployment: {
+          status: latestDeployment.state,
+          environment: latestDeployment.target,
+          creator: latestDeployment.creator?.username || 'hqzdev',
+          createdAt: latestDeployment.createdAt,
+          url: `https://vercel.com/${latestDeployment.creator?.username || 'hqzdev'}/lumia-dashboard/deployment/${latestDeployment.uid}`
+        },
+        buildTime: `${Math.round((latestDeployment.buildingAt - latestDeployment.createdAt) / 1000)}s`,
+      }));
+      return Promise.resolve()
+    } catch (error) {
+      console.error('Error fetching project status:', error);
+      toast({
+        title: "Error fetching project status",
+        description: "Could not load project status. Please try again later.",
+        variant: "destructive"
+      });
+      return Promise.reject(error)
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('https://api.vercel.com/v2/deployments/logs', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_VERCEL_TOKEN}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setLogs(data.logs || []);
+      return Promise.resolve()
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      toast({
+        title: "Error fetching logs",
+        description: "Could not load logs data. Please try again later.",
+        variant: "destructive"
+      });
+      return Promise.reject(error)
+    }
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+
+    try {
+      // Fetch all data simultaneously
+      await Promise.allSettled([
+        fetchDeployments(),
+        fetchFirewallData(),
+        fetchProjectStatus(),
+        fetchLogs()
+      ]);
+
+      toast({
+        title: "Dashboard refreshed",
+        description: "All metrics have been updated with the latest data.",
+      });
+    } catch (error) {
+      console.error('Error during refresh:', error);
+      toast({
+        title: "Refresh failed",
+        description: "Some data could not be updated. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchDeployments()
-    // Set up polling every 5 minutes
-    const interval = setInterval(fetchDeployments, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+    fetchFirewallData();
+    const interval = setInterval(fetchFirewallData, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    fetchDeployments();
+    const interval = setInterval(fetchDeployments, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    fetchProjectStatus();
+    const interval = setInterval(fetchProjectStatus, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -297,56 +453,101 @@ export default function Dashboard() {
                   </Card>
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">System Health</CardTitle>
-                      <Maximize2 className="h-4 w-4 text-blue-500" />
+                      <CardTitle className="text-sm font-medium">Project Status</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Link 
+                          href={projectStatus.deployment.url}
+                          target="_blank"
+                          className="hover:text-blue-600 transition-colors"
+                        >
+                          <Maximize2 className="h-4 w-4 text-blue-500" />
+                        </Link>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="h-[200px] w-full bg-blue-50/50 rounded-md flex flex-col items-center justify-center p-4">
                         <div className="w-full space-y-4">
                           <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-muted-foreground">System Status</span>
-                              <span className="text-sm font-medium text-green-600">Healthy</span>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">Status</span>
+                                <span className={`text-sm font-medium ${
+                                  projectStatus.deployment.status === 'ready' ? 'text-green-600' :
+                                  projectStatus.deployment.status === 'building' ? 'text-yellow-600' :
+                                  projectStatus.deployment.status === 'error' ? 'text-red-600' :
+                                  'text-blue-600'
+                                }`}>
+                                  {projectStatus.deployment.status === 'ready' ? 'Ready' :
+                                   projectStatus.deployment.status === 'building' ? 'Building' :
+                                   projectStatus.deployment.status === 'error' ? 'Error' :
+                                   'Loading'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Created</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(projectStatus.deployment.createdAt).getTime() > 0 
+                                    ? `${Math.floor((Date.now() - new Date(projectStatus.deployment.createdAt).getTime()) / 60000)}m ago`
+                                    : '...'} by <span className="text-blue-600">{projectStatus.deployment.creator}</span>
+                                </span>
+                              </div>
                             </div>
                             <div className="h-2 w-full bg-green-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-green-600 w-[96%]" />
+                              <div className={`h-full ${
+                                projectStatus.deployment.status === 'ready' ? 'bg-green-600' :
+                                projectStatus.deployment.status === 'building' ? 'bg-yellow-600' :
+                                projectStatus.deployment.status === 'error' ? 'bg-red-600' :
+                                'bg-blue-600'
+                              } w-[100%]`} />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">CPU Usage</span>
-                                <span className="text-xs text-blue-600">76%</span>
+                                <span className="text-xs text-muted-foreground">Build Time</span>
+                                <span className="text-xs text-blue-600">{projectStatus.buildTime}</span>
                               </div>
                               <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-600 w-[76%]" />
+                                <div className="h-full bg-blue-600 w-[45%]" />
                               </div>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Memory</span>
-                                <span className="text-xs text-blue-600">82%</span>
+                                <span className="text-xs text-muted-foreground">Framework</span>
+                                <span className="text-xs text-blue-600">{projectStatus.framework}</span>
                               </div>
                               <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-600 w-[82%]" />
+                                <div className="h-full bg-blue-600 w-[100%]" />
                               </div>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Network</span>
-                                <span className="text-xs text-blue-600">120MB/s</span>
+                                <span className="text-xs text-muted-foreground">Domain</span>
+                                <span className={`text-xs ${
+                                  projectStatus.domain.status === 'active' ? 'text-green-600' :
+                                  projectStatus.domain.status === 'pending' ? 'text-yellow-600' :
+                                  'text-blue-600'
+                                }`}>
+                                  {projectStatus.domain.status === 'active' ? 'Active' : 'Pending'}
+                                </span>
                               </div>
                               <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-600 w-[65%]" />
+                                <div className={`h-full ${
+                                  projectStatus.domain.status === 'active' ? 'bg-green-600' :
+                                  projectStatus.domain.status === 'pending' ? 'bg-yellow-600' :
+                                  'bg-blue-600'
+                                } w-[100%]`} />
                               </div>
                             </div>
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Storage</span>
-                                <span className="text-xs text-blue-600">42%</span>
+                                <span className="text-xs text-muted-foreground">SSL</span>
+                                <span className={`text-xs ${projectStatus.ssl.valid ? 'text-green-600' : 'text-red-600'}`}>
+                                  {projectStatus.ssl.valid ? 'Valid' : 'Invalid'}
+                                </span>
                               </div>
                               <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-600 w-[42%]" />
+                                <div className={`h-full ${projectStatus.ssl.valid ? 'bg-green-600' : 'bg-red-600'} w-[100%]`} />
                               </div>
                             </div>
                           </div>
@@ -359,24 +560,146 @@ export default function Dashboard() {
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Logs</CardTitle>
-                      <Maximize2 className="h-4 w-4 text-blue-500" />
+                      <div className="flex items-center gap-2">
+                        <Link 
+                          href="https://vercel.com/ha1zyys-projects/lumia-ai/logs"
+                          target="_blank"
+                          className="hover:text-blue-600 transition-colors"
+                        >
+                          <Maximize2 className="h-4 w-4 text-blue-500" />
+                        </Link>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                        View recent system logs and events.
+                      <div className="h-[200px] w-full bg-blue-50/50 rounded-md overflow-auto p-4">
+                        <div className="space-y-2">
+                          {logs.length > 0 ? (
+                            logs.map((log) => (
+                              <div
+                                key={log.id}
+                                className="flex items-start gap-2 text-xs animate-fade-in"
+                              >
+                                <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                                  log.type === 'error' ? 'bg-red-500' :
+                                  log.type === 'warning' ? 'bg-yellow-500' :
+                                  'bg-blue-500'
+                                }`} />
+                                <div className="space-y-1 w-full">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground">
+                                      {new Date(log.timestamp).toLocaleTimeString()}
+                                    </span>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                                      log.type === 'error' ? 'bg-red-100 text-red-700' :
+                                      log.type === 'warning' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-blue-100 text-blue-700'
+                                    }`}>
+                                      {log.type}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-foreground break-all">
+                                    {log.message}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="h-full flex items-center justify-center text-blue-600">
+                              Loading logs...
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Firewall</CardTitle>
-                      <Maximize2 className="h-4 w-4 text-blue-500" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                        Monitor and manage firewall settings.
-                      </div>
-                    </CardContent>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="cursor-pointer">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Firewall</CardTitle>
+                            <Maximize2 className="h-4 w-4 text-blue-500" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">All Traffic</span>
+                                    <span className="text-xs text-blue-600">{firewallData.allTraffic}</span>
+                                  </div>
+                                  <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-600 w-[85%]" />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">Allowed</span>
+                                    <span className="text-xs text-green-600">{firewallData.allowed}</span>
+                                  </div>
+                                  <div className="h-1.5 w-full bg-green-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-600" style={{ width: `${(firewallData.allowed/firewallData.allTraffic)*100}%` }} />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-yellow-600">Challenged: {firewallData.challenged}</span>
+                                <span className="text-red-600">Denied: {firewallData.denied}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[725px] bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-blue-500" />
+                            Firewall Statistics
+                          </DialogTitle>
+                          <DialogDescription>
+                            Detailed firewall traffic and security metrics
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-3 gap-4">
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">All Traffic</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-blue-600">{firewallData.allTraffic}</div>
+                              </CardContent>
+                            </Card>
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Allowed</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-green-600">{firewallData.allowed}</div>
+                              </CardContent>
+                            </Card>
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Challenged</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-yellow-600">{firewallData.challenged}</div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                          <Card className="bg-white/80">
+                            <CardHeader>
+                              <CardTitle className="text-sm">Traffic Overview</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[200px] w-full bg-blue-50/50 rounded-md">
+                                {/* Here you can add a chart component to show traffic over time */}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </Card>
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
