@@ -3,6 +3,15 @@
 import { useState, useCallback, useEffect } from "react"
 import { Activity, Brain, Clock, Cpu, Database, Maximize2, RefreshCw, Server, GitBranch, GitCommit, Shield } from "lucide-react"
 import Link from "next/link"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -235,7 +244,7 @@ export default function Dashboard() {
           environment: latestDeployment.target,
           creator: latestDeployment.creator?.username || 'hqzdev',
           createdAt: latestDeployment.createdAt,
-          url: `https://vercel.com/${latestDeployment.creator?.username || 'hqzdev'}/lumia-dashboard/deployment/${latestDeployment.uid}`
+          url: `https://vercel.com/${latestDeployment.creator?.username || 'hqzdev'}/lumia-ai/deployment/${latestDeployment.uid}`
         },
         buildTime: `${Math.round((latestDeployment.buildingAt - latestDeployment.createdAt) / 1000)}s`,
       }));
@@ -401,10 +410,10 @@ export default function Dashboard() {
                       <DialogTrigger asChild>
                         <div
                           onClick={() => setSelectedMetric(metric.id)}
-                          className="animate-fade-in"
+                          className="animate-fade-in cursor-pointer"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:border-blue-200">
+                          <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:border-blue-200 hover:shadow-lg">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                               <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
                               <metric.icon className={`h-4 w-4 ${metric.color}`} />
@@ -420,7 +429,26 @@ export default function Dashboard() {
                                     <span className="text-xs text-muted-foreground">Incoming</span>
                                     <span className="text-sm font-medium">{metric.value.incoming}</span>
                                   </div>
-                                  <div className="text-xs text-muted-foreground mt-2">{metric.historical}</div>
+                                  <div className="h-[100px] w-full mt-4">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <LineChart
+                                        data={[
+                                          { time: '12h', outgoing: 0, incoming: 0 },
+                                          { time: '9h', outgoing: 120, incoming: 20 },
+                                          { time: '6h', outgoing: 250, incoming: 35 },
+                                          { time: '3h', outgoing: 380, incoming: 42 },
+                                          { time: 'now', outgoing: 463, incoming: 56 }
+                                        ]}
+                                      >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="time" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Line type="monotone" dataKey="outgoing" stroke="#3b82f6" />
+                                        <Line type="monotone" dataKey="incoming" stroke="#10b981" />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </div>
                                 </div>
                               )}
                               {metric.id === 'deployment' && (
@@ -438,10 +466,22 @@ export default function Dashboard() {
                                     <div className="text-center">
                                       <div className="text-xs font-medium">{metric.memory}</div>
                                       <div className="text-xs text-muted-foreground">Memory</div>
+                                      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                                        <div 
+                                          className="bg-blue-600 h-1 rounded-full" 
+                                          style={{ width: metric.memory }}
+                                        />
+                                      </div>
                                     </div>
                                     <div className="text-center">
                                       <div className="text-xs font-medium">{metric.disk}</div>
                                       <div className="text-xs text-muted-foreground">Disk</div>
+                                      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                                        <div 
+                                          className="bg-blue-600 h-1 rounded-full" 
+                                          style={{ width: metric.disk }}
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -465,17 +505,124 @@ export default function Dashboard() {
                           </Card>
                         </div>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[725px] bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200">
+                      <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2">
-                            <metric.icon className={`h-5 w-5 ${metric.color}`} />
-                            {metric.title} Metrics
-                          </DialogTitle>
-                          <DialogDescription>
-                            Detailed information about {metric.title.toLowerCase()} performance.
-                          </DialogDescription>
+                          <DialogTitle>{metric.title}</DialogTitle>
+                          <DialogDescription>{metric.description}</DialogDescription>
                         </DialogHeader>
-                        <AIDetailedView metricId={metric.id} />
+                        <div className="py-4">
+                          {metric.id === 'fast-data-transfer' && (
+                            <div className="space-y-4">
+                              <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart
+                                    data={[
+                                      { time: '12h', outgoing: 0, incoming: 0 },
+                                      { time: '10h', outgoing: 80, incoming: 15 },
+                                      { time: '8h', outgoing: 180, incoming: 25 },
+                                      { time: '6h', outgoing: 250, incoming: 35 },
+                                      { time: '4h', outgoing: 320, incoming: 40 },
+                                      { time: '2h', outgoing: 400, incoming: 48 },
+                                      { time: 'now', outgoing: 463, incoming: 56 }
+                                    ]}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="time" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Line 
+                                      type="monotone" 
+                                      dataKey="outgoing" 
+                                      stroke="#3b82f6" 
+                                      name="Outgoing Traffic"
+                                    />
+                                    <Line 
+                                      type="monotone" 
+                                      dataKey="incoming" 
+                                      stroke="#10b981" 
+                                      name="Incoming Traffic"
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">Outgoing Traffic</h4>
+                                  <p className="text-2xl font-bold text-blue-600">{metric.value.outgoing}</p>
+                                  <p className="text-xs text-muted-foreground">Peak: 463kB/s</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">Incoming Traffic</h4>
+                                  <p className="text-2xl font-bold text-emerald-600">{metric.value.incoming}</p>
+                                  <p className="text-xs text-muted-foreground">Peak: 56kB/s</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {metric.id === 'deployment' && (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">Build Time</h4>
+                                  <p className="text-2xl font-bold">{metric.buildTime}</p>
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">Memory Usage</h4>
+                                  <p className="text-2xl font-bold">{metric.memory}</p>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-blue-600 h-2 rounded-full" 
+                                      style={{ width: metric.memory }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">Disk Usage</h4>
+                                  <p className="text-2xl font-bold">{metric.disk}</p>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-blue-600 h-2 rounded-full" 
+                                      style={{ width: metric.disk }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium">Deployment Details</h4>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                  <p className="text-sm">
+                                    <span className="font-medium">Name:</span> {metric.value.name}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Commit:</span> {metric.value.commit}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Message:</span> {metric.value.message}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {(metric.id === 'neon-emerald' || metric.id === 'blob-store') && (
+                            <div className="space-y-4">
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-sm">
+                                  <span className="font-medium">Name:</span> {metric.value.name}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Type:</span> {metric.value.type}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Created:</span> {metric.value.created}
+                                </p>
+                                <p className="text-sm">
+                                  <span className="font-medium">Status:</span>{" "}
+                                  <span className="text-green-600">Connected</span>
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </DialogContent>
                     </Dialog>
                   ))}
@@ -782,49 +929,147 @@ export default function Dashboard() {
                     </Dialog>
                   </Card>
                   <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Deployments</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="h-4 w-4 text-blue-500" />
-                        <Maximize2 className="h-4 w-4 text-blue-500" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {deployments.length > 0 ? (
-                          deployments.map((deployment) => (
-                            <div
-                              key={deployment.id}
-                              className="flex items-center justify-between p-2 rounded-lg bg-blue-50/50"
-                            >
-                              <div className="flex items-center gap-2">
-                                <GitCommit className="h-4 w-4 text-blue-500" />
-                                <div>
-                                  <div className="text-sm font-medium">{deployment.environment}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(deployment.created_at).toLocaleString()}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  deployment.status === 'success' ? 'bg-green-100 text-green-700' :
-                                  deployment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                  deployment.status === 'failure' ? 'bg-red-100 text-red-700' :
-                                  'bg-blue-100 text-blue-700'
-                                }`}>
-                                  {deployment.status}
-                                </span>
-                              </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="cursor-pointer">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Deployments</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <GitBranch className="h-4 w-4 text-blue-500" />
+                              <Maximize2 className="h-4 w-4 text-blue-500" />
                             </div>
-                          ))
-                        ) : (
-                          <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
-                            Loading deployment data...
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              {deployments.length > 0 ? (
+                                deployments.map((deployment) => (
+                                  <div
+                                    key={deployment.id}
+                                    className="flex items-center justify-between p-2 rounded-lg bg-blue-50/50"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <GitCommit className="h-4 w-4 text-blue-500" />
+                                      <div>
+                                        <div className="text-sm font-medium">{deployment.environment}</div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {new Date(deployment.created_at).toLocaleString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs px-2 py-1 rounded-full ${
+                                        deployment.status === 'success' ? 'bg-green-100 text-green-700' :
+                                        deployment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                        deployment.status === 'failure' ? 'bg-red-100 text-red-700' :
+                                        'bg-blue-100 text-blue-700'
+                                      }`}>
+                                        {deployment.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="h-[100px] w-full bg-blue-50/50 rounded-md flex items-center justify-center text-blue-600">
+                                  Loading deployment data...
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[725px] bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <GitBranch className="h-5 w-5 text-blue-500" />
+                            Deployment History
+                          </DialogTitle>
+                          <DialogDescription>
+                            Detailed history of all deployments and their statuses
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-3 gap-4">
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Total Deployments</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-blue-600">{deployments.length}</div>
+                              </CardContent>
+                            </Card>
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Successful</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-green-600">
+                                  {deployments.filter(d => d.status === 'success').length}
+                                </div>
+                              </CardContent>
+                            </Card>
+                            <Card className="bg-white/80">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">Failed</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold text-red-600">
+                                  {deployments.filter(d => d.status === 'failure').length}
+                                </div>
+                              </CardContent>
+                            </Card>
                           </div>
-                        )}
-                      </div>
-                    </CardContent>
+                          <Card className="bg-white/80">
+                            <CardHeader>
+                              <CardTitle className="text-sm">Recent Deployments</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {deployments.map((deployment) => (
+                                  <div
+                                    key={deployment.id}
+                                    className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className={`h-3 w-3 rounded-full ${
+                                        deployment.status === 'success' ? 'bg-green-500' :
+                                        deployment.status === 'pending' ? 'bg-yellow-500' :
+                                        deployment.status === 'failure' ? 'bg-red-500' :
+                                        'bg-blue-500'
+                                      }`} />
+                                      <div>
+                                        <div className="text-sm font-medium">
+                                          {deployment.environment}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          Deployed {new Date(deployment.created_at).toLocaleString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                                        deployment.status === 'success' ? 'bg-green-100 text-green-700' :
+                                        deployment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                        deployment.status === 'failure' ? 'bg-red-100 text-red-700' :
+                                        'bg-blue-100 text-blue-700'
+                                      }`}>
+                                        {deployment.status}
+                                      </span>
+                                      <Link
+                                        href={`https://vercel.com/ha1zyys-projects/lumia-ai/deployments/${deployment.id}`}
+                                        target="_blank"
+                                        className="text-blue-500 hover:text-blue-600"
+                                      >
+                                        <Maximize2 className="h-4 w-4" />
+                                      </Link>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </Card>
                 </div>
               </TabsContent>
