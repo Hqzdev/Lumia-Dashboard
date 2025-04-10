@@ -40,7 +40,7 @@ export function AIMetricCard({ metric }: AIMetricCardProps) {
         {animateFadeIn}
       </style>
       <Card
-        className="overflow-hidden transition-all hover:shadow-lg hover:scale-105 cursor-pointer bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl animate-fade-in"
+        className="overflow-hidden transition-all hover:scale-105 cursor-pointer bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl animate-fade-in"
         style={{ animationDelay: `${Number.parseInt(metric.id.charAt(0), 36) * 100}ms` }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

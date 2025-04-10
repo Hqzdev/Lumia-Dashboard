@@ -20,33 +20,27 @@ const sampleLogs: Record<string, LogEntry[]> = {
   latency: [
     { timestamp: "2024-03-10 15:42:23", event: "Response time spike detected", value: "156ms", type: "warning" },
     { timestamp: "2024-03-10 15:30:12", event: "System optimization completed", value: "42ms", type: "success" },
-    { timestamp: "2024-03-10 15:15:45", event: "Load balancer adjusted", value: "38ms", type: "info" },
-    { timestamp: "2024-03-10 14:55:30", event: "High traffic period", value: "78ms", type: "info" },
-    { timestamp: "2024-03-10 14:30:00", event: "Performance check", value: "45ms", type: "info" },
+   
   ],
   throughput: [
     { timestamp: "2024-03-10 15:45:00", event: "New throughput record", value: "1,240 req/s", type: "success" },
     { timestamp: "2024-03-10 15:30:00", event: "Traffic surge handled", value: "1,150 req/s", type: "info" },
-    { timestamp: "2024-03-10 15:15:00", event: "Auto-scaling triggered", value: "980 req/s", type: "warning" },
-    { timestamp: "2024-03-10 15:00:00", event: "Normal operation", value: "850 req/s", type: "info" },
+    
   ],
   accuracy: [
     { timestamp: "2024-03-10 15:40:00", event: "Model accuracy improved", value: "98.3%", type: "success" },
     { timestamp: "2024-03-10 15:25:00", event: "Training iteration completed", value: "97.8%", type: "info" },
-    { timestamp: "2024-03-10 15:10:00", event: "Data validation check", value: "97.5%", type: "info" },
-    { timestamp: "2024-03-10 14:55:00", event: "Accuracy dip detected", value: "97.1%", type: "warning" },
+    
   ],
   resources: [
     { timestamp: "2024-03-10 15:44:00", event: "Memory usage optimized", value: "76%", type: "success" },
     { timestamp: "2024-03-10 15:30:00", event: "CPU spike detected", value: "92%", type: "warning" },
-    { timestamp: "2024-03-10 15:15:00", event: "Resource allocation adjusted", value: "82%", type: "info" },
-    { timestamp: "2024-03-10 15:00:00", event: "System health check", value: "78%", type: "info" },
+   
   ],
   availability: [
     { timestamp: "2024-03-10 15:45:00", event: "System fully operational", value: "99.99%", type: "success" },
     { timestamp: "2024-03-10 15:30:00", event: "Maintenance completed", value: "99.95%", type: "info" },
-    { timestamp: "2024-03-10 15:15:00", event: "Scheduled maintenance", value: "99.90%", type: "warning" },
-    { timestamp: "2024-03-10 15:00:00", event: "Health check passed", value: "99.99%", type: "info" },
+    
   ],
 }
 
@@ -233,7 +227,7 @@ export function AIDetailedView({ metricId }: AIDetailedViewProps) {
               <CardDescription>Recent system events and updates</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px] pr-4">
+              <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-4">
                   {logs.map((log, index) => (
                     <div

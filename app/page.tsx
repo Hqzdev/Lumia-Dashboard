@@ -160,7 +160,7 @@ export default function Dashboard() {
                     size="sm"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="bg-blue-600 hover:bg-blue-700 rounded-xl transition-all hover:shadow-md"
+                    className="bg-blue-600 hover:bg-blue-700 rounded-xl transition-all "
                   >
                     {isRefreshing ? (
                       <>
@@ -205,7 +205,7 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Model Performance Overview</CardTitle>
                       <Maximize2 className="h-4 w-4 text-blue-500" />
@@ -255,7 +255,7 @@ export default function Dashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">System Health</CardTitle>
                       <Maximize2 className="h-4 w-4 text-blue-500" />
@@ -317,7 +317,7 @@ export default function Dashboard() {
                 </div>
               </TabsContent>
               <TabsContent value="models" className="space-y-4">
-                <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md">
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all">
                   <CardHeader>
                     <CardTitle>AI Models</CardTitle>
                     <CardDescription>Overview of deployed AI models and their performance.</CardDescription>
@@ -327,7 +327,7 @@ export default function Dashboard() {
                       {["Lumia V2", "Lumia V1 Max", "Lumia V2 Pro"].map((model, index) => (
                         <Card
                           key={model}
-                          className="bg-white/80 border-2 border-gray-200 rounded-2xl transition-all hover:shadow-md hover:border-blue-200 animate-slide-in"
+                          className="bg-white/80 border-2 border-gray-200 rounded-2xl transition-all hover:border-blue-200 animate-slide-in"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
                           <CardHeader className="pb-2">
