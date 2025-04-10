@@ -97,59 +97,70 @@ export default function Dashboard() {
     timestamp: string;
     message: string;
     type: 'info' | 'error' | 'warning';
-  }>>([])
+  }>>([
+    {
+      id: '1',
+      timestamp: new Date().toISOString(),
+      message: 'Application started successfully',
+      type: 'info'
+    }
+  ]);
 
   const metrics = [
     {
-      id: "latency",
-      title: "Latency",
-      description: "Average response time",
-      value: "42ms",
-      change: "-8%",
-      historical: "↓ 12% from last month",
-      icon: Clock,
+      id: "fast-data-transfer",
+      title: "Fast Data Transfer",
+      description: "Data transfer statistics",
+      value: {
+        outgoing: "463kB",
+        incoming: "56kB"
+      },
+      change: "+12%",
+      historical: "Last 12 hours",
+      icon: Activity,
       color: "text-blue-500",
     },
     {
-      id: "throughput",
-      title: "Throughput",
-      description: "Requests per second",
-      value: "1,240",
-      change: "+12%",
-      historical: "↑ 8% from last month",
-      icon: Activity,
+      id: "deployment",
+      title: "Deployment",
+      description: "Latest deployment status",
+      value: {
+        name: "nxuss4r30",
+        commit: "959956b",
+        message: "Update settings-dialog.tsx"
+      },
+      buildTime: "2m",
+      memory: "26.1%",
+      disk: "30.2%",
+      icon: GitBranch,
       color: "text-blue-600",
     },
     {
-      id: "accuracy",
-      title: "Accuracy",
-      description: "Model precision",
-      value: "98.3%",
-      change: "+0.5%",
-      historical: "↑ 1.2% from last month",
-      icon: Brain,
+      id: "neon-emerald",
+      title: "Neon Database",
+      description: "Database connection status",
+      value: {
+        name: "neon-emerald-village",
+        type: "Neon",
+        created: "Mar 19"
+      },
+      status: "active",
+      icon: Database,
       color: "text-blue-700",
     },
     {
-      id: "resources",
-      title: "Resources",
-      description: "CPU & Memory usage",
-      value: "76%",
-      change: "+4%",
-      historical: "↑ 2% from last month",
-      icon: Cpu,
+      id: "blob-store",
+      title: "Blob Store",
+      description: "Storage statistics",
+      value: {
+        name: "nextjs-ai-chatbot-b5fj-blob",
+        type: "Blob Store",
+        created: "Mar 18"
+      },
+      status: "active",
+      icon: Database,
       color: "text-blue-800",
-    },
-    {
-      id: "availability",
-      title: "Availability",
-      description: "System uptime",
-      value: "99.99%",
-      change: "0%",
-      historical: "↑ 0.01% from last month",
-      icon: Server,
-      color: "text-blue-900",
-    },
+    }
   ]
 
   const fetchDeployments = async () => {
@@ -251,16 +262,27 @@ export default function Dashboard() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setLogs(data.logs || []);
-      return Promise.resolve()
+      
+      // Transform the logs data into our expected format
+      const formattedLogs = (data.logs || []).map((log: any) => ({
+        id: log.id || Math.random().toString(36).substr(2, 9),
+        timestamp: log.timestamp || new Date().toISOString(),
+        message: log.text || log.message || 'No message provided',
+        type: log.type || 'info'
+      }));
+
+      setLogs(formattedLogs);
+      return Promise.resolve();
     } catch (error) {
       console.error('Error fetching logs:', error);
-      toast({
-        title: "Error fetching logs",
-        description: "Could not load logs data. Please try again later.",
-        variant: "destructive"
-      });
-      return Promise.reject(error)
+      // Add a fallback log entry when there's an error
+      setLogs(prev => [...prev, {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toISOString(),
+        message: 'Error fetching logs. Will retry in 30 seconds.',
+        type: 'error'
+      }]);
+      return Promise.reject(error);
     }
   };
 
@@ -382,7 +404,65 @@ export default function Dashboard() {
                           className="animate-fade-in"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          <AIMetricCard metric={metric} />
+                          <Card className="bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl transition-all hover:border-blue-200">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+                              <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                            </CardHeader>
+                            <CardContent>
+                              {metric.id === 'fast-data-transfer' && (
+                                <div className="space-y-2">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted-foreground">Outgoing</span>
+                                    <span className="text-sm font-medium">{metric.value.outgoing}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted-foreground">Incoming</span>
+                                    <span className="text-sm font-medium">{metric.value.incoming}</span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-2">{metric.historical}</div>
+                                </div>
+                              )}
+                              {metric.id === 'deployment' && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{metric.value.name}</span>
+                                    <span className="text-xs text-muted-foreground">({metric.value.commit})</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{metric.value.message}</p>
+                                  <div className="grid grid-cols-3 gap-2 mt-2">
+                                    <div className="text-center">
+                                      <div className="text-xs font-medium">{metric.buildTime}</div>
+                                      <div className="text-xs text-muted-foreground">Build</div>
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-xs font-medium">{metric.memory}</div>
+                                      <div className="text-xs text-muted-foreground">Memory</div>
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-xs font-medium">{metric.disk}</div>
+                                      <div className="text-xs text-muted-foreground">Disk</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {(metric.id === 'neon-emerald' || metric.id === 'blob-store') && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{metric.value.name}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{metric.value.type}</span>
+                                    <span className="text-xs">Created {metric.value.created}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                    <span className="text-xs text-muted-foreground">Connected</span>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
                         </div>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[725px] bg-white/95 backdrop-blur-md rounded-2xl border-2 border-gray-200">
@@ -577,7 +657,7 @@ export default function Dashboard() {
                             logs.map((log) => (
                               <div
                                 key={log.id}
-                                className="flex items-start gap-2 text-xs animate-fade-in"
+                                className="flex items-start gap-2 text-xs animate-fade-in bg-white/50 p-2 rounded-lg"
                               >
                                 <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${
                                   log.type === 'error' ? 'bg-red-500' :
@@ -604,8 +684,8 @@ export default function Dashboard() {
                               </div>
                             ))
                           ) : (
-                            <div className="h-full flex items-center justify-center text-blue-600">
-                              Loading logs...
+                            <div className="h-full flex items-center justify-center text-muted-foreground">
+                              No logs available
                             </div>
                           )}
                         </div>
